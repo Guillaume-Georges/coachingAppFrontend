@@ -41,7 +41,7 @@ export default function ExerciseDetailPage() {
         <Tabs
           tabs={[
             { id: 'instructions', label: 'Instructions', content: <InstructionList steps={data.instructions} cues={data.coachingCues} faults={data.commonFaults} /> },
-            { id: 'stimulus', label: 'Stimulus', content: <Stimulus primary={data.musclesPrimary} secondary={data.musclesSecondary} /> },
+            { id: 'stimulus', label: 'Stimulus', content: <Stimulus primary={data.musclesPrimaryCodes || data.musclesPrimary} secondary={data.musclesSecondaryCodes || data.musclesSecondary} /> },
           ]}
         />
       </div>
@@ -88,9 +88,12 @@ function InstructionList({ steps, cues, faults }: { steps: string[]; cues?: stri
 
 function Stimulus({ primary, secondary }: { primary: string[]; secondary: string[] }) {
   const { data: meta } = useMuscleMapMeta();
-  // If backend provides codes later, we can resolve codes -> names here.
-  const namesPrimary = primary;
-  const namesSecondary = secondary;
+  // Normalize: if codes appear, map to display names using meta
+  const codeToName = new Map<string, string>();
+  meta?.regions?.forEach(r => codeToName.set(r.code, r.name));
+  const normalize = (arr: string[]) => arr.map(v => codeToName.get(v) || v);
+  const namesPrimary = normalize(primary || []);
+  const namesSecondary = normalize(secondary || []);
   return (
     <div>
       <MuscleMap primary={namesPrimary} secondary={namesSecondary} />

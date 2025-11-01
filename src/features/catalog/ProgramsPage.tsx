@@ -26,7 +26,7 @@ export default function ProgramsPage() {
         <select
           value={params.get('goal') ?? ''}
           onChange={(e) => onFilterChange('goal', e.target.value)}
-          className="rounded-lg border-gray-300 text-sm"
+          className="rounded-lg border-gray-300 text-sm pr-10 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
         >
           <option value="">All goals</option>
           <option value="muscle">Muscle</option>
@@ -36,7 +36,7 @@ export default function ProgramsPage() {
         <select
           value={params.get('level') ?? ''}
           onChange={(e) => onFilterChange('level', e.target.value)}
-          className="rounded-lg border-gray-300 text-sm"
+          className="rounded-lg border-gray-300 text-sm pr-10 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100"
         >
           <option value="">All levels</option>
           <option value="beginner">Beginner</option>

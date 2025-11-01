@@ -62,7 +62,7 @@ export function ChipsSelect({ facet, mode, value, onChange, placeholder = 'Selec
   return (
     <div className="relative" ref={wrapperRef}>
       {/* Selected chips / input trigger */}
-      <div className="flex flex-wrap gap-1 rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-2 py-1.5">
+      <div className="flex flex-wrap gap-1 rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-2 py-1.5 text-gray-900 dark:text-slate-100">
         {values.map(v => (
           <span key={v} className="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-2 py-0.5 text-xs">
             {v}
@@ -73,7 +73,7 @@ export function ChipsSelect({ facet, mode, value, onChange, placeholder = 'Selec
           <div className="flex-1 min-w-[8rem]">
             <Combobox.Input
               value={query}
-              className="w-full bg-transparent outline-none text-sm px-1 select-text"
+              className="w-full bg-transparent outline-none text-sm px-1 select-text text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400"
               placeholder={values.length === 0 ? placeholder : ''}
               onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
               onFocus={() => setOpen(true)}

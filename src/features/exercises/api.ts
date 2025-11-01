@@ -9,7 +9,7 @@ export function useExercisesQuery(search: URLSearchParams) {
   const qc = useQueryClient();
   // add light "fields" hint to backend for lean responses (ignored by mocks)
   const s = new URLSearchParams(search);
-  if (!s.get('fields')) s.set('fields', 'id,name,thumbnailUrl,modality,bodyPartFocus,tags');
+  if (!s.get('fields')) s.set('fields', 'id,name,thumbnailUrl,modality,bodyPartFocus,tags,musclesPrimaryCodes,musclesSecondaryCodes');
   const key = ['exercises', Object.fromEntries(s)];
   const q = useQuery({
     queryKey: key,
@@ -143,8 +143,53 @@ export function useAdminExerciseMutations() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['exercises'] }); toast.success('Exercise created'); },
   });
   const update = useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<TExercise> }) => api.put(`/api/exercises/${id}`, patch),
-    onSuccess: (_, vars) => { qc.invalidateQueries({ queryKey: ['exercise', vars.id] }); qc.invalidateQueries({ queryKey: ['exercises'] }); toast.success('Exercise updated'); },
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<TExercise> }) => {
+      const touchesMuscles =
+        Object.prototype.hasOwnProperty.call(patch, 'musclesPrimaryCodes') ||
+        Object.prototype.hasOwnProperty.call(patch, 'musclesSecondaryCodes') ||
+        Object.prototype.hasOwnProperty.call(patch, 'musclesPrimary') ||
+        Object.prototype.hasOwnProperty.call(patch, 'musclesSecondary');
+      if (touchesMuscles) {
+        return api.patch(`/api/exercises/${id}?async=1`, patch);
+      }
+      return api.put(`/api/exercises/${id}`, patch);
+    },
+    onSuccess: async (data: any, vars) => {
+      // If server responded with early success, poll job briefly then refresh
+      if (data?.updateAccepted && data?.jobId) {
+        const start = Date.now();
+        const timeoutMs = 5000;
+        let done = false;
+        try {
+          while (!done && Date.now() - start < timeoutMs) {
+            // eslint-disable-next-line no-await-in-loop
+            const j = await api.get<any>(`/api/jobs/${data.jobId}`);
+            if (j?.status === 'succeeded' || j?.status === 'failed') {
+              done = true; break;
+            }
+            // eslint-disable-next-line no-await-in-loop
+            await new Promise(r => setTimeout(r, 400));
+          }
+        } catch {}
+      }
+      qc.invalidateQueries({ queryKey: ['exercise', vars.id] });
+      qc.invalidateQueries({ queryKey: ['exercises'] });
+      toast.success('Exercise updated');
+    },
+    onError: (err: any) => {
+      try {
+        const code = err?.code;
+        const details = err?.details as any;
+        if (err?.status === 422 && details?.invalidMuscles) {
+          const p = details.invalidMuscles.primary?.join(', ');
+          const s = details.invalidMuscles.secondary?.join(', ');
+          const parts = [p ? `primary: ${p}` : '', s ? `secondary: ${s}` : ''].filter(Boolean);
+          toast.error(`Invalid muscles: ${parts.join(' • ')}`);
+          return;
+        }
+      } catch {}
+      toast.error(err?.message || 'Failed to update exercise');
+    },
   });
   const del = useMutation({
     mutationFn: (id: string) => api.del(`/api/exercises/${id}`),

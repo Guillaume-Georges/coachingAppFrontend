@@ -17,7 +17,7 @@ export default function MembersLeaderboardPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Members Leaderboard</h1>
       <div className="flex items-center gap-2">
-        <select className="rounded-lg border-gray-300 text-sm" value={leagueId} onChange={(e)=>{setLeague(e.target.value); setPage(1);}}>
+        <select className="rounded-lg border-gray-300 text-sm pr-10 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" value={leagueId} onChange={(e)=>{setLeague(e.target.value); setPage(1);}}>
           <option value="all">All leagues</option>
           <option value="1">Bronze</option>
           <option value="2">Silver</option>

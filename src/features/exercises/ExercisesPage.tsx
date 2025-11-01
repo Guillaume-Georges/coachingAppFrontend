@@ -44,7 +44,7 @@ export default function ExercisesPage() {
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">Exercise Library</h1>
           <div className="flex items-center gap-2">
-            <button className={`inline-flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2 rounded-xl border ${hasFilters ? 'border-brand-600 text-brand-700 bg-brand-50' : 'border-gray-300 text-gray-700'} hover:bg-gray-50 dark:hover:bg-slate-800`} onClick={() => setOpen(true)}>
+            <button className={`inline-flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2 rounded-xl border ${hasFilters ? 'border-brand-600 text-brand-700 bg-brand-50 dark:text-white' : 'border-gray-300 text-gray-700 dark:text-slate-100 dark:border-slate-600'} hover:bg-gray-50 dark:hover:bg-slate-800`} onClick={() => setOpen(true)}>
               <FunnelIcon className="h-5 w-5" />
               <span className="hidden sm:inline">Filters{hasFilters ? ` (${activeFilters})` : ''}</span>
             </button>

@@ -20,18 +20,18 @@ export default function MembersPage() {
 
       <div className="card p-4 sm:p-6">
         <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,auto] gap-2 mb-4">
-          <input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search by email or name" className="rounded-xl border border-gray-300 px-3 py-2" />
-          <select value={limit} onChange={(e)=>{ setLimit(Number(e.target.value)); setPage(1); }} className="rounded-xl border border-gray-300 px-3 py-2">
+          <input value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Search by email or name" className="rounded-xl border border-gray-300 px-3 py-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" />
+          <select value={limit} onChange={(e)=>{ setLimit(Number(e.target.value)); setPage(1); }} className="rounded-xl border border-gray-300 px-3 py-2 pr-10 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100">
             {[10,20,50].map(n => <option key={n} value={n}>{n}/page</option>)}
           </select>
           <button className="btn-ghost px-3 py-2" onClick={()=>{ setPage(1); list.refetch(); }}>Search</button>
         </div>
         <h2 className="text-sm font-semibold mb-2">Invite user</h2>
         <div className="grid grid-cols-1 sm:grid-cols-[1fr,140px,140px,140px,auto] gap-2">
-          <input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="email@example.com" className="rounded-xl border border-gray-300 px-3 py-2" />
-          <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Name (optional)" className="rounded-xl border border-gray-300 px-3 py-2" />
-          <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Set password" className="rounded-xl border border-gray-300 px-3 py-2" />
-          <select value={role} onChange={(e)=>setRole(e.target.value as any)} className="rounded-xl border border-gray-300 px-3 py-2">
+          <input type="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="email@example.com" className="rounded-xl border border-gray-300 px-3 py-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" />
+          <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Name (optional)" className="rounded-xl border border-gray-300 px-3 py-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" />
+          <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Set password" className="rounded-xl border border-gray-300 px-3 py-2 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100" />
+          <select value={role} onChange={(e)=>setRole(e.target.value as any)} className="rounded-xl border border-gray-300 px-3 py-2 pr-10 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100">
             <option value="member">Member</option>
             <option value="admin">Admin</option>
           </select>
@@ -72,7 +72,7 @@ export default function MembersPage() {
                     </td>
                     <td className="py-2 pr-4">{u.name || '—'}</td>
                     <td className="py-2 pr-4">
-                      <select disabled={u.role === 'superadmin'} value={u.role} onChange={(e)=> changeRole.mutate({ id: u.id, role: e.target.value as any })} className="rounded-lg border border-gray-300 px-2 py-1">
+                      <select disabled={u.role === 'superadmin'} value={u.role} onChange={(e)=> changeRole.mutate({ id: u.id, role: e.target.value as any })} className="rounded-lg border border-gray-300 px-2 py-1 pr-10 bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100">
                         <option value="member">member</option>
                         <option value="admin">admin</option>
                         {u.role === 'superadmin' && <option value="superadmin">superadmin</option>}

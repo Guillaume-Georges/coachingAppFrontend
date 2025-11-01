@@ -67,10 +67,11 @@ export function UploadVideoDropzone({ onUploaded }: Props) {
     >
       <input ref={inputRef} type="file" accept="video/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
       <p className="text-sm text-gray-600 dark:text-slate-300">Drag & drop a video file here, or</p>
-      <button type="button" className="btn-primary px-3 py-1.5 mt-2" onClick={chooseLocalFile}>Choose file</button>
+      <div className="mt-2 flex flex-col sm:inline-flex items-center justify-center">
+        <button type="button" className="btn-primary px-3 py-1.5" onClick={chooseLocalFile}>Choose file</button>
+      </div>
       {progress !== null && <div className="mt-3 text-sm">Uploading… {progress}%</div>}
       {error && <div className="mt-2 text-sm text-red-600">{error}</div>}
     </div>
   );
 }
-

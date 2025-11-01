@@ -100,22 +100,22 @@ export default function HomePage() {
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium">Title</label>
-                <input className="mt-1 w-full rounded-lg border-gray-300" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
+                <input className="mt-1 w-full rounded-lg border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium">Description</label>
-                <textarea className="mt-1 w-full rounded-lg border-gray-300" rows={3} value={editing.copy} onChange={(e) => setEditing({ ...editing, copy: e.target.value })} />
+                <textarea className="mt-1 w-full rounded-lg border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400" rows={3} value={editing.copy} onChange={(e) => setEditing({ ...editing, copy: e.target.value })} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium">CTA Label</label>
-                  <input className="mt-1 w-full rounded-lg border-gray-300" value={editing.cta} onChange={(e) => setEditing({ ...editing, cta: e.target.value })} />
+                  <input className="mt-1 w-full rounded-lg border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400" value={editing.cta} onChange={(e) => setEditing({ ...editing, cta: e.target.value })} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium">CTA Link</label>
                   <div className="mt-1 relative">
-                    <input className="w-full rounded-lg border-gray-300 pr-28" value={editing.to} onChange={(e) => setEditing({ ...editing, to: e.target.value })} />
-                    <button type="button" className="absolute right-1 top-1.5 px-3 py-1 rounded-md bg-gray-100 dark:bg-slate-800 text-sm" onClick={() => setShowRoutes((s) => !s)}>Choose</button>
+                    <input className="w-full rounded-lg border border-gray-300 pr-28 bg-white dark:bg-slate-900 px-3 py-2 text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400" value={editing.to} onChange={(e) => setEditing({ ...editing, to: e.target.value })} />
+                    <button type="button" className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-md bg-gray-100 dark:bg-slate-800 text-sm" onClick={() => setShowRoutes((s) => !s)}>Choose</button>
                     {showRoutes && (
                       <div className="absolute z-10 mt-2 right-0 w-56 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg overflow-hidden">
                         {[{label:'Home',to:'/home'}, {label:'Library',to:'/exercises'}, {label:'Profile',to:'/profile'}, {label:'Members (admin)',to:'/admin/members'}].map((opt) => (
@@ -137,7 +137,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="mt-6 flex items-center justify-end gap-2">
-              <button className="btn-ghost px-3 py-1.5" onClick={() => setEditing(null)}>Cancel</button>
+              <button className="btn-ghost px-3 py-2" onClick={() => setEditing(null)}>Cancel</button>
               <button className="btn-primary px-4 py-2 rounded-xl" onClick={() => { if (editing) saveSlide(editing); setEditing(null); }}>Save</button>
             </div>
           </div>

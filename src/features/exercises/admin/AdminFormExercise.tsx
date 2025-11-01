@@ -6,6 +6,7 @@ import { UploadVideoDropzone } from '../../../components/UploadVideoDropzone';
 import { UploadImageButton } from '../../../components/UploadImageButton';
 import { ChipsSelect } from '../../../components/ChipsSelect';
 import { Spinner } from '../../../components/ui/Spinner';
+import { MultiSelect } from '../../../components/ui/MultiSelect';
 
 const ExerciseSchema = z.object({
   name: z.string().min(1),
@@ -43,6 +44,14 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
   const autoThumbRef = useRef<string | undefined>(initial?.thumbnailUrl);
 
   function setField<K extends keyof FormValue>(k: K, v: FormValue[K]) { setValue((s) => ({ ...s, [k]: v })); }
+
+  function toggleCode(list: 'musclesPrimaryCodes'|'musclesSecondaryCodes', code: string) {
+    setValue((s) => {
+      const cur = new Set((s as any)[list] as string[]);
+      if (cur.has(code)) cur.delete(code); else cur.add(code);
+      return { ...s, [list]: Array.from(cur) } as any;
+    });
+  }
 
   useEffect(() => {
     if (!initial) return;
@@ -97,6 +106,23 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
     if (fullDetail.thumbnailUrl) autoThumbRef.current = fullDetail.thumbnailUrl;
   }, [fullDetail]);
 
+  // When meta arrives, backfill codes from names (preferred for save)
+  useEffect(() => {
+    if (!muscleMeta) return;
+    const nameToCode = new Map<string, string>();
+    muscleMeta.regions.forEach(r => nameToCode.set(r.name, r.code));
+    setValue((s) => {
+      const next: FormValue = { ...s };
+      if ((next.musclesPrimaryCodes?.length || 0) === 0 && (next.musclesPrimary?.length || 0) > 0) {
+        next.musclesPrimaryCodes = (next.musclesPrimary || []).map(n => nameToCode.get(n) || n);
+      }
+      if ((next.musclesSecondaryCodes?.length || 0) === 0 && (next.musclesSecondary?.length || 0) > 0) {
+        next.musclesSecondaryCodes = (next.musclesSecondary || []).map(n => nameToCode.get(n) || n);
+      }
+      return next;
+    });
+  }, [muscleMeta]);
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const cleaned = {
@@ -124,6 +150,9 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
     if (payload.bodyPartFocus && typeof payload.bodyPartFocus === 'string') {
       payload.bodyPartFocus = payload.bodyPartFocus.replace(/\s/g, '');
     }
+    // Send canonical codes only; let backend normalize names
+    delete payload.musclesPrimary;
+    delete payload.musclesSecondary;
     setErrors({});
     if (initial?.id) {
       updateExercise.mutate({ id: initial.id, patch: payload }, { onSuccess: () => { onClose?.(); } });
@@ -143,7 +172,7 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label htmlFor="form-name" className="block text-sm font-medium select-text">Name</label>
-          <input id="form-name" className={errClass("mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2","name")} value={value.name} onChange={(e) => setField('name', e.target.value)} required />
+          <input id="form-name" className={errClass("mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 pr-10 text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400","name")} value={value.name} onChange={(e) => setField('name', e.target.value)} required />
         </div>
         <div>
           <label className="block text-sm font-medium">Modality</label>
@@ -151,7 +180,7 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
         </div>
         <div>
           <label className="block text-sm font-medium">Difficulty</label>
-          <select id="form-difficulty" className={errClass("mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2","difficulty")} value={value.difficulty || ''} onChange={(e) => setField('difficulty', (e.target.value || undefined) as any)}>
+          <select id="form-difficulty" className={errClass("mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 pr-10 text-gray-900 dark:text-slate-100","difficulty")} value={value.difficulty || ''} onChange={(e) => setField('difficulty', (e.target.value || undefined) as any)}>
             <option value="">Unspecified</option>
             {(['Beginner','Intermediate','Advanced'] as const).map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
@@ -162,9 +191,48 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
         </div>
         <div>
           <label className="block text-sm font-medium">Body Part Focus</label>
-          <select id="form-bpf" className={errClass("mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2","bodyPartFocus")} value={value.bodyPartFocus} onChange={(e) => setField('bodyPartFocus', e.target.value as any)}>
+          <select id="form-bpf" className={errClass("mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 pr-10 text-gray-900 dark:text-slate-100","bodyPartFocus")} value={value.bodyPartFocus} onChange={(e) => setField('bodyPartFocus', e.target.value as any)}>
             {filters?.bodyPartFocus?.map((b) => <option key={b} value={b}>{b}</option>)}
           </select>
+        </div>
+
+        {/* Muscles selection with modern dropdown UI */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium select-text">Muscles (primary)</label>
+          <div className="mt-1">
+            <MultiSelect
+              value={value.musclesPrimaryCodes || []}
+              options={(muscleMeta?.regions || []).map(r => ({ value: r.code, label: r.name }))}
+              onChange={(next) => {
+                setField('musclesPrimaryCodes', next as any);
+                if (muscleMeta) {
+                  const codeToName = new Map(muscleMeta.regions.map(r => [r.code, r.name] as const));
+                  const names = (next as string[]).map(c => codeToName.get(c)).filter(Boolean) as string[];
+                  setField('musclesPrimary', names as any);
+                }
+              }}
+              placeholder="Select primary muscles"
+            />
+          </div>
+          <p className="mt-1 text-xs text-slate-500">Tip: pick 1–3 primary targets.</p>
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium select-text">Muscles (secondary)</label>
+          <div className="mt-1">
+            <MultiSelect
+              value={value.musclesSecondaryCodes || []}
+              options={(muscleMeta?.regions || []).map(r => ({ value: r.code, label: r.name }))}
+              onChange={(next) => {
+                setField('musclesSecondaryCodes', next as any);
+                if (muscleMeta) {
+                  const codeToName = new Map(muscleMeta.regions.map(r => [r.code, r.name] as const));
+                  const names = (next as string[]).map(c => codeToName.get(c)).filter(Boolean) as string[];
+                  setField('musclesSecondary', names as any);
+                }
+              }}
+              placeholder="Select secondary muscles"
+            />
+          </div>
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium">Equipment</label>
@@ -183,7 +251,7 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
             {value.instructions.map((s, i) => (
               <div key={i} className="flex items-center gap-2 rounded-xl border border-gray-300 dark:border-slate-700 px-2 py-1.5 bg-white dark:bg-slate-900">
                 <span className="h-6 w-6 shrink-0 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200 flex items-center justify-center text-xs">{i+1}</span>
-                <input id={`form-instruction-${i}`} className="flex-1 bg-transparent outline-none" value={s}
+                <input id={`form-instruction-${i}`} className="flex-1 bg-transparent outline-none text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400" value={s}
                   onChange={(e) => setField('instructions', value.instructions.map((x, idx) => idx===i ? e.target.value : x))}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addStepAt(i); }
@@ -274,7 +342,7 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
         <div>
           <label className="block text-sm font-medium select-text">Coaching Cues (one per line)</label>
           <textarea
-            className="mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 select-text"
+            className="mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 select-text text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400"
             rows={4}
             placeholder="Short, actionable sentences. e.g., 'Keep ribs down'"
             value={value.coachingCues?.join('\n') || ''}
@@ -284,7 +352,7 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
         <div>
           <label className="block text-sm font-medium select-text">Common Faults (one per line)</label>
           <textarea
-            className="mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 select-text"
+            className="mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 select-text text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400"
             rows={4}
             placeholder="Short, helpful warnings. e.g., 'Overarching lower back'"
             value={value.commonFaults?.join('\n') || ''}
@@ -294,10 +362,10 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
 
         <div>
           <label htmlFor="form-demo-start" className="block text-sm font-medium">Demo Start (sec)</label>
-          <input id="form-demo-start" type="number" className="mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2" value={value.demoStartSec ?? ''} onChange={(e) => setField('demoStartSec', e.target.value ? Number(e.target.value) : undefined)} />
+          <input id="form-demo-start" type="number" className="mt-1 w-full rounded-xl border border-gray-300 bg-white dark:bg-slate-900 px-3 py-2 pr-10 text-gray-900 dark:text-slate-100" value={value.demoStartSec ?? ''} onChange={(e) => setField('demoStartSec', e.target.value ? Number(e.target.value) : undefined)} />
         </div>
       </div>
-      <div className="sticky bottom-0 z-50 -mx-4 sm:mx-0 px-4 sm:px-0 py-3 pb-[env(safe-area-inset-bottom)] bg-white dark:bg-slate-950 border-t border-gray-200 dark:border-slate-800 flex items-center justify-between gap-2 rounded-b-2xl shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.14)]">
+      <div className="sticky bottom-0 z-50 -mx-4 sm:mx-0 px-4 sm:px-0 py-4 pb-[env(safe-area-inset-bottom)] bg-white dark:bg-slate-950 border-t border-gray-200 dark:border-slate-800 flex items-center justify-between gap-2 rounded-b-2xl shadow-[0_-8px_16px_-8px_rgba(0,0,0,0.14)]">
         <div>
           {initial?.id && (
             <button type="button" className="px-3 py-2 rounded-lg text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-200" onClick={() => {
