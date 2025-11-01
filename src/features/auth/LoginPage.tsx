@@ -31,7 +31,7 @@ export default function LoginPage() {
           <label className="block text-sm font-medium">Email</label>
           <input
             type="email"
-            className="mt-1 w-full rounded-lg border-gray-300"
+            className="mt-1 w-full rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400"
             placeholder="member@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -42,7 +42,7 @@ export default function LoginPage() {
           <label className="block text-sm font-medium">Password</label>
           <input
             type="password"
-            className="mt-1 w-full rounded-lg border-gray-300"
+            className="mt-1 w-full rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-gray-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400"
             placeholder="Your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -50,12 +50,15 @@ export default function LoginPage() {
           />
         </div>
         {error && <div className="text-sm text-red-600">{error}</div>}
-        <div className="flex items-center justify-between">
-          <a href="/signup" className="text-sm text-gray-700 hover:underline">Create an account</a>
-          <button type="submit" className="btn-primary px-4 py-2 rounded-xl" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
+        {/* Mobile-first layout: full-width primary, subtle secondary links */}
+        <div className="space-y-3">
+          <button type="submit" className="btn-primary w-full py-2.5 rounded-xl" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
+          <div className="text-sm flex items-center justify-between">
+            <a href="/signup" className="text-gray-700 hover:underline dark:text-slate-200">Create an account</a>
+            <a href="/forgot-password" className="text-gray-700 hover:underline dark:text-slate-200">Forgot password?</a>
+          </div>
         </div>
       </form>
     </div>
   );
 }
-

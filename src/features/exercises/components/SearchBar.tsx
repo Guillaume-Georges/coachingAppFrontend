@@ -24,7 +24,6 @@ export function SearchBar() {
 
   return (
     <div className="w-full">
-      <label htmlFor={id} className="block text-xs font-semibold tracking-wider uppercase text-slate-400">Search by name</label>
       <div className="mt-1 relative">
         <input
           id={id}

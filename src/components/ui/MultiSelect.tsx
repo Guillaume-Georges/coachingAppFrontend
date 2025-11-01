@@ -33,7 +33,8 @@ export function MultiSelect({
           </span>
         </Listbox.Button>
         <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
-          <Listbox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 text-sm shadow-xl focus:outline-none">
+          {/* Position the options panel below the trigger to avoid obscuring text input */}
+          <Listbox.Options className="absolute top-full left-0 z-40 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 text-sm shadow-xl focus:outline-none">
             {options.map(opt => (
               <Listbox.Option
                 key={opt.value}
@@ -56,4 +57,3 @@ export function MultiSelect({
     </Listbox>
   );
 }
-

@@ -10,6 +10,10 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { useUserProfile } from '../user/useUserProfile';
 import { useAuth } from '../../auth/AuthProvider';
 import { AdminFormExercise } from './admin/AdminFormExercise';
+import { useQueryClient } from '@tanstack/react-query';
+import { useApi } from '../../api';
+import { Exercise } from './types';
+import { z } from 'zod';
 
 export default function ExercisesPage() {
   const [params, setParams] = useSearchParams(new URLSearchParams({ page: '1', limit: '24' }));
@@ -19,6 +23,8 @@ export default function ExercisesPage() {
   const [editItem, setEditItem] = useState<any | null>(null);
   const { data: profile } = useUserProfile();
   const { isAuthenticated } = useAuth();
+  const qc = useQueryClient();
+  const api = useApi();
   const page = Number(params.get('page') || 1);
   const limit = Number(params.get('limit') || 24);
 
@@ -38,13 +44,33 @@ export default function ExercisesPage() {
 
   const hasFilters = activeFilters > 0;
 
+  // Prefetch details for the first few items to speed up navigation to detail pages
+  useEffect(() => {
+    const items = data?.items || [];
+    const prefetchCount = 8; // prefetch top N
+    items.slice(0, prefetchCount).forEach((it) => {
+      if (!it?.id) return;
+      qc.prefetchQuery({
+        queryKey: ['exercise', it.id],
+        queryFn: async () => {
+          const res = await api.get<unknown>(`/api/exercises/${it.id}`);
+          return Exercise.parse(res);
+        },
+        staleTime: 1000 * 60 * 5,
+      }).catch(() => {});
+    });
+  }, [data?.items, qc, api]);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-8">
       <div>
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">Exercise Library</h1>
           <div className="flex items-center gap-2">
-            <button className={`inline-flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2 rounded-xl border ${hasFilters ? 'border-brand-600 text-brand-700 bg-brand-50 dark:text-white' : 'border-gray-300 text-gray-700 dark:text-slate-100 dark:border-slate-600'} hover:bg-gray-50 dark:hover:bg-slate-800`} onClick={() => setOpen(true)}>
+            <button className={`inline-flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2 rounded-xl border ${hasFilters
+              ? 'border-brand-600 text-brand-700 bg-brand-50 hover:bg-brand-100 dark:border-brand-700 dark:bg-brand-700 dark:text-white dark:hover:bg-brand-600'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-800'
+            }`} onClick={() => setOpen(true)}>
               <FunnelIcon className="h-5 w-5" />
               <span className="hidden sm:inline">Filters{hasFilters ? ` (${activeFilters})` : ''}</span>
             </button>
@@ -78,7 +104,22 @@ export default function ExercisesPage() {
             ) : (
               <ul className="mt-6 space-y-4" role="list">
                 {list.map((it) => (
-                  <ExerciseCard key={it.id} item={it} onEdit={isAdmin ? (itm) => setEditItem(itm) : undefined} />
+                  <ExerciseCard
+                    key={it.id}
+                    item={it}
+                    onEdit={isAdmin ? (itm) => setEditItem(itm) : undefined}
+                    onHover={() => {
+                      if (!it?.id) return;
+                      qc.prefetchQuery({
+                        queryKey: ['exercise', it.id],
+                        queryFn: async () => {
+                          const res = await api.get<unknown>(`/api/exercises/${it.id}`);
+                          return Exercise.parse(res);
+                        },
+                        staleTime: 1000 * 60 * 5,
+                      }).catch(() => {});
+                    }}
+                  />
                 ))}
               </ul>
             )}

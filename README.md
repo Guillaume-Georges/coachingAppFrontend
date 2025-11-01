@@ -1,4 +1,4 @@
-Coach Training Frontend
+Ronin's Creed Frontend
 
 Stack
 - React + TypeScript + Vite
@@ -16,7 +16,8 @@ Getting Started
 - Run dev server: `npm run dev`
 
 Auth
-- The app uses a cookie-based refresh flow with a short-lived access token. On load, the client attempts `/api/auth/refresh`.
+- Default: cookie-based refresh flow with a short-lived access token. On load, the client attempts `/api/auth/refresh`.
+- Dev option: header/body refresh. When `VITE_USE_HEADER_REFRESH=true` (and backend `AUTH_DEV_EXPOSE_REFRESH=true`), the FE stores a refresh token in-memory (optionally localStorage in dev) and sends it via `X-Refresh-Token` on `/api/auth/refresh`. Cookie fallback remains enabled.
 - UI is gated by an auth `ready` flag so admin controls do not flash during refresh.
 - Auth0 can be integrated via `VITE_AUTH0_*`, but for local mocks this is not required.
 
@@ -44,6 +45,19 @@ Env vars
 - `VITE_CLOUDINARY_CLOUD_NAME` – Cloudinary cloud name.
 - `VITE_CLOUDINARY_UPLOAD_PRESET` – unsigned preset for uploads (enables widget for admin uploads).
 - Optional: `VITE_AUTH0_DOMAIN`, `VITE_AUTH0_CLIENT_ID`, `VITE_AUTH0_AUDIENCE` if integrating Auth0.
+- Dev-only: `VITE_USE_HEADER_REFRESH=true` to use `X-Refresh-Token` header on refresh (backend must set `AUTH_DEV_EXPOSE_REFRESH=true`).
+- Dev-only: `VITE_DEV_PERSIST_REFRESH=false|true` to persist refresh token in localStorage (NOT recommended; dev only).
+
+Backend (dev) alignment
+- Set: `REFRESH_STATELESS=true`, `AUTH_DEV_EXPOSE_REFRESH=true`, `CORS_ORIGINS=http://localhost:5173,http://localhost:5174`.
+- With these, backend accepts refresh via cookie, `X-Refresh-Token` header, or JSON body and returns `refreshToken` in JSON (dev only).
+
+Production deployment
+- Serve FE and BE on the same domain via nginx (no CORS needed). Keep cookie-based refresh (HttpOnly, SameSite=Lax, Path=/api/auth/refresh).
+- Do NOT expose refresh token in JSON (`AUTH_DEV_EXPOSE_REFRESH=false`).
+- Example nginx:
+  - `location / { try_files $uri /index.html; }`
+  - `location /api/ { proxy_pass http://127.0.0.1:4000; proxy_set_header Host $host; }`
 
 API reference (selected)
 - Exercises
@@ -69,6 +83,20 @@ Run locally
 1. `cp .env.example .env` and set values (keep `VITE_MOCK_API=true` initially).
 2. `npm i`
 3. `npm run dev`
+
+Caching & Persistence
+- HTTP client-level ETag cache for GETs (`src/api/client.ts`). Client sends `If-None-Match` and serves cached bodies on `304 Not Modified`.
+- React Query cache with tuned `staleTime`s:
+  - Home hero slides: 10 minutes (`src/features/home/HomePage.tsx`).
+  - Exercise Library list and prefetch: 5 minutes (`src/features/exercises/api.ts`).
+- Persisted cache across reloads using `@tanstack/react-query-persist-client` in `src/main.tsx`:
+  - Uses `localStorage` persister, 24h `maxAge`, and `VITE_CACHE_BUSTER` env for invalidation.
+  - Excludes identity-sensitive queries like `user:profile` from persistence (see `shouldDehydrateQuery`).
+  - If you add identity/security queries, consider excluding them as well.
+  - On logout, we clear in-memory cache and remove the persisted cache key to avoid cross-account leakage.
+
+Auth & user profile
+- `useUserProfile` is keyed as `['user:profile', user.id]` to isolate data per account and prevent admin/member role leakage after switching users.
 
 Auth (local JWT)
 - Login route: `/login`; Sign up route: `/signup`.

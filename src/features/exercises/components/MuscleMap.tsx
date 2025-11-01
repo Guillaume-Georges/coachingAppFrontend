@@ -49,10 +49,18 @@ export function MuscleMap({ primary, secondary }: Props) {
     // Clear previous
     svg.querySelectorAll('.m-primary,.m-secondary').forEach((n) => n.classList.remove('m-primary', 'm-secondary'));
     const nameToId = maps.byAnyFront; // front for now; supports names or codes
+    // Broad fallbacks for aggregate names
     const FALLBACK: Record<string, string[]> = {
       rectus_abdominis: ['abs_upper','abs_lower'],
       quadriceps: ['quads_outer','quads_inner'],
       trapezius: ['traps'],
+    };
+    // Alias map for codes that may differ between API and SVG ids
+    const ALIASES: Record<string, string[]> = {
+      quads_medial: ['vastus_medialis','vm','quads_medialis','vastusmedialis'],
+      quads_outer: ['vastus_lateralis','vl','vastuslateralis'],
+      quads_inner: ['vastus_intermedius','vi','vastusintermedius'],
+      gluteus_maximus: ['glute_max','gluteusmaximus','gluteus-maximus'],
     };
     const add = (arr: string[], cls: string) => {
       arr.forEach((name) => {
@@ -70,6 +78,18 @@ export function MuscleMap({ primary, secondary }: Props) {
             const el = (svg as any).getElementById ? (svg as any).getElementById(alt) : svg.querySelector(`#${CSS.escape(alt)}`);
             (el as any)?.classList?.add(cls);
           });
+          return;
+        }
+        // Try common alias variations and id patterns
+        const variants = [
+          key,
+          key.replace(/_/g, '-'),
+          key.replace(/_/g, ''),
+          ...(ALIASES[code] || []),
+        ];
+        for (const v of variants) {
+          const byId = (svg as any).getElementById ? (svg as any).getElementById(v) : svg.querySelector(`#${CSS.escape(v)}`);
+          if (byId) { (byId as any).classList?.add(cls); return; }
         }
       });
     };

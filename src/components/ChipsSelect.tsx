@@ -2,7 +2,8 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { Combobox, Transition } from '@headlessui/react';
 import { useFacetOptions, useCreateFacet } from '../features/exercises/api';
 
-type Facet = 'categories'|'modalities'|'tags';
+// Facets supported by the chips selector. Extendable as backend adds support.
+type Facet = 'categories'|'modalities'|'tags'|'equipment';
 
 type ChipsSelectProps = {
   facet: Facet;
@@ -84,7 +85,8 @@ export function ChipsSelect({ facet, mode, value, onChange, placeholder = 'Selec
             <button type="button" aria-label="Close" className="absolute right-2 top-1.5 text-gray-400 hover:text-gray-600" onClick={() => setOpen(false)}>×</button>
           )}
           <Transition as={Fragment} show={open} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
-            <Combobox.Options static className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 text-sm shadow-lg">
+            {/* Position below the input so it never covers the typing area */}
+            <Combobox.Options static className="absolute top-full left-0 z-40 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 text-sm shadow-lg">
               {isLoading ? (
                 <div className="px-3 py-2 text-gray-500">Loading…</div>
               ) : (

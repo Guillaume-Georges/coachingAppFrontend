@@ -4,11 +4,11 @@ import { Tag } from './Tag';
 
 type ExerciseListItem = { id: string; name?: string; thumbnailUrl?: string; modality?: string; bodyPartFocus?: string; tags?: string[]; };
 
-export function ExerciseCard({ item, onEdit }: { item: ExerciseListItem; onEdit?: (it: any) => void }) {
+export function ExerciseCard({ item, onEdit, onHover }: { item: ExerciseListItem; onEdit?: (it: any) => void; onHover?: () => void }) {
   return (
     <li className="card overflow-hidden transition-shadow ring-1 ring-transparent hover:ring-gray-200 dark:hover:ring-slate-800 hover:shadow-md">
       <div className="flex items-center gap-4 p-3 sm:p-4">
-        <Link to={`/exercises/${item.id}`} className="flex items-center gap-4 flex-1 min-w-0">
+        <Link to={`/exercises/${item.id}`} className="flex items-center gap-4 flex-1 min-w-0" onMouseEnter={onHover}>
           {item.thumbnailUrl ? (
             <img src={item.thumbnailUrl} alt="" className="h-16 w-16 rounded-lg object-cover" />
           ) : (

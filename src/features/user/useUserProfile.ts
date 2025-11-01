@@ -6,9 +6,10 @@ export type UserProfile = { id: string; name?: string; role: 'member'|'coach'|'s
 
 export function useUserProfile() {
   const api = useApi();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   return useQuery({
-    queryKey: ['user:profile'],
+    // Keyed by auth user id to avoid leaking admin state after logout/login
+    queryKey: ['user:profile', user?.id ?? 'anon'],
     queryFn: async () => {
       const data = await api.get<{ id: string; name?: string; role: UserProfile['role'] }>(`/api/me`);
       return data;

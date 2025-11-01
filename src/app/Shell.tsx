@@ -2,6 +2,8 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUserProfile } from '../features/user/useUserProfile';
 import { useAuth } from '../auth/AuthProvider';
+import { useApi } from '../api';
+import toast from 'react-hot-toast';
 import { BookOpenIcon, UserCircleIcon, HomeIcon, UsersIcon } from '@heroicons/react/24/outline';
 
 const baseNav = [
@@ -14,7 +16,7 @@ const baseNav = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, ready, logout } = useAuth();
+  const { isAuthenticated, ready, logout, user } = useAuth() as any;
   const { data: profile } = useUserProfile();
   const loc = useLocation();
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // simplified nav – no workout shortcut
   const loginInFlight = useRef(false);
   const lastLoginAt = useRef(0);
+  const api = useApi();
 
   useEffect(() => {
     const handler = () => {
@@ -61,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-6">
             <Link to="/home" className="flex items-center gap-2 font-semibold">
               <div className="h-8 w-8 rounded-xl bg-brand-600 shadow-inner" />
-              <span className="text-gray-800 dark:text-slate-100">Coach Training</span>
+              <span className="text-gray-800 dark:text-slate-100">Ronin's Creed</span>
             </Link>
             <nav className="hidden md:flex items-center">
               <div className="bg-gray-100/80 dark:bg-slate-800/80 rounded-2xl p-1 flex items-center gap-1 shadow-inner">
@@ -104,13 +107,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="container-app py-6 pb-28 md:pb-6">
+        {ready && isAuthenticated && user?.emailVerified === false && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200 p-3 flex items-center justify-between">
+            <div className="text-sm">Please verify your email to secure your account.</div>
+            <button
+              className="px-3 py-1.5 rounded-md text-sm bg-amber-600 text-white hover:bg-amber-700"
+              onClick={async () => {
+                try { await api.post('/api/auth/email/request-verify', {}); toast.success('Verification email sent'); }
+                catch (e: any) { toast.error(e?.message || 'Failed to send'); }
+              }}
+            >Resend verification</button>
+          </div>
+        )}
         {children}
       </main>
-      <nav className="fixed bottom-0 inset-x-0 md:hidden">
+      <nav className="fixed bottom-0 inset-x-0 md:hidden z-50">
         <div className="mx-auto max-w-none px-0 pb-[env(safe-area-inset-bottom)]">
           <div className="flex justify-around py-2 text-xs border-t border-gray-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur">
             {tabs.map((t) => (
-              <NavLink key={t.to} to={t.to} className={({isActive}) => `px-3 py-2 rounded flex flex-col items-center gap-1 ${isActive ? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-slate-400'}`}>
+              <NavLink key={t.to} to={t.to} className={({ isActive }) => `px-3 py-2 rounded flex flex-col items-center gap-1 ${isActive ? 'text-gray-900 dark:text-white font-semibold' : 'text-gray-600 dark:text-slate-400'}`}>
                 <t.icon className="h-5 w-5" />
                 <span>{t.label}</span>
               </NavLink>

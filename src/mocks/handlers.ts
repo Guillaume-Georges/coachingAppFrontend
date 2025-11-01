@@ -104,11 +104,12 @@ export const handlers = [
     const role = email.startsWith('admin') ? 'admin' : 'member';
     const accessToken = `mock-${role}-token`;
     const user = { id: 'user_1', email, role } as any;
-    return HttpResponse.json({ accessToken, user, expiresIn: 3600 } as any);
+    const refreshToken = 'mock-refresh-token';
+    return HttpResponse.json({ accessToken, user, expiresIn: 3600, refreshToken } as any);
   }),
   http.post('/api/auth/refresh', async () => {
     // Generate a new access token (mock)
-    return HttpResponse.json({ accessToken: 'mock-member-token', user: { id: 'user_1', email: 'member@example.com', role: 'member' }, expiresIn: 3600 } as any);
+    return HttpResponse.json({ accessToken: 'mock-member-token', user: { id: 'user_1', email: 'member@example.com', role: 'member' }, expiresIn: 3600, refreshToken: 'mock-refresh-token-rotated' } as any);
   }),
   http.post('/api/auth/logout', async () => HttpResponse.json({ ok: true } as any)),
   http.post('/api/auth/register', async ({ request }) => {

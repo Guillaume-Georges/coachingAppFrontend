@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import { useApi } from '../api';
 
-export function UploadImageButton({ label = 'Upload', onUploaded, className, variant = 'icon' }: { label?: string; onUploaded: (url: string, info?: any) => void; className?: string; variant?: 'button'|'icon' }) {
+export function UploadImageButton({ label = 'Upload', onUploaded, className, variant = 'icon', signaturePath = '/api/uploads/signature' }: { label?: string; onUploaded: (url: string, info?: any) => void; className?: string; variant?: 'button'|'icon'; signaturePath?: string }) {
   const api = useApi();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
@@ -14,9 +14,9 @@ export function UploadImageButton({ label = 'Upload', onUploaded, className, var
   async function onFile(file: File) {
     try {
       setLoading(true);
-      const sig: any = await api.post('/api/uploads/signature', { resourceType: 'image' } as any);
-      const cloudName = sig.cloudName; const apiKey = sig.apiKey; const signature = sig.signature; const timestamp = sig.timestamp; const folder = sig.folder;
-      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+      const sig: any = await api.post(signaturePath, { resourceType: 'image' } as any);
+      const cloudName = sig.cloudName; const apiKey = sig.apiKey; const signature = sig.signature; const timestamp = sig.timestamp; const folder = sig.folder; const resourceType = sig.resourceType || 'image';
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
       const data = new FormData();
       data.append('file', file);
       data.append('api_key', apiKey);
@@ -59,4 +59,3 @@ export function UploadImageButton({ label = 'Upload', onUploaded, className, var
     </>
   );
 }
-

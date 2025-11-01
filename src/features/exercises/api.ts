@@ -11,6 +11,8 @@ export function useExercisesQuery(search: URLSearchParams) {
   const s = new URLSearchParams(search);
   if (!s.get('fields')) s.set('fields', 'id,name,thumbnailUrl,modality,bodyPartFocus,tags,musclesPrimaryCodes,musclesSecondaryCodes');
   const key = ['exercises', Object.fromEntries(s)];
+  // Exercises list uses a 5-minute cache window to make Library feel snappy
+  // across navigations while still updating relatively often.
   const q = useQuery({
     queryKey: key,
     queryFn: async () => {
@@ -30,7 +32,8 @@ export function useExercisesQuery(search: URLSearchParams) {
       const total = Number((data as any).total ?? items.length);
       return { items, page, limit, total };
     },
-    staleTime: 1000 * 30,
+    // Cache library queries for 5 minutes to avoid refetching on re-visit
+    staleTime: 1000 * 60 * 5,
     keepPreviousData: true,
   });
 
@@ -52,7 +55,7 @@ export function useExercisesQuery(search: URLSearchParams) {
         const total = Number((data as any).total ?? items.length);
         return { items, page, limit: limit2, total };
       },
-      staleTime: 1000 * 30,
+      staleTime: 1000 * 60 * 5,
     });
   }
 
@@ -140,7 +143,13 @@ export function useAdminExerciseMutations() {
   const qc = useQueryClient();
   const create = useMutation({
     mutationFn: (payload: Omit<TExercise, 'id'|'createdAt'|'updatedAt'>) => api.post(`/api/exercises`, payload),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['exercises'] }); toast.success('Exercise created'); },
+    onSuccess: () => {
+      // Refresh lists and related metadata so UI reflects the new exercise
+      qc.invalidateQueries({ queryKey: ['exercises'] });
+      qc.invalidateQueries({ queryKey: ['exercises:filters'] });
+      qc.invalidateQueries({ queryKey: ['exercises:facets'] });
+      toast.success('Exercise created');
+    },
   });
   const update = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Partial<TExercise> }) => {
@@ -174,6 +183,8 @@ export function useAdminExerciseMutations() {
       }
       qc.invalidateQueries({ queryKey: ['exercise', vars.id] });
       qc.invalidateQueries({ queryKey: ['exercises'] });
+      qc.invalidateQueries({ queryKey: ['exercises:filters'] });
+      qc.invalidateQueries({ queryKey: ['exercises:facets'] });
       toast.success('Exercise updated');
     },
     onError: (err: any) => {
@@ -193,7 +204,12 @@ export function useAdminExerciseMutations() {
   });
   const del = useMutation({
     mutationFn: (id: string) => api.del(`/api/exercises/${id}`),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['exercises'] }); toast.success('Exercise deleted'); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['exercises'] });
+      qc.invalidateQueries({ queryKey: ['exercises:filters'] });
+      qc.invalidateQueries({ queryKey: ['exercises:facets'] });
+      toast.success('Exercise deleted');
+    },
   });
   return { create, update, del };
 }

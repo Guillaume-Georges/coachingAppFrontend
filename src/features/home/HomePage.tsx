@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useApi } from '../../api';
+import { useQuery } from '@tanstack/react-query';
 import { useUserProfile } from '../user/useUserProfile';
 import { UploadImageButton } from '../../components/UploadImageButton';
 import { useAuth } from '../../auth/AuthProvider';
@@ -23,25 +24,24 @@ export default function HomePage() {
   const [editing, setEditing] = useState<Slide | null>(null);
   const [showRoutes, setShowRoutes] = useState(false);
 
+  // Cache home hero slides for 10 minutes. We also rely on the HTTP client
+  // ETag cache so repeat navigations avoid unnecessary network if server sends ETag.
+  const { data: slidesData } = useQuery<Slide[]>({
+    queryKey: ['home:slides', { admin: isAdmin }],
+    queryFn: async () => {
+      const path = isAdmin ? '/api/home/slides' : '/api/home/slides/public';
+      const res = await api.get<any>(path);
+      const list: Slide[] = (res?.slides ?? res ?? []);
+      return Array.isArray(list) && list.length > 0
+        ? list
+        : [{ title: 'Exercise Library', copy: 'Want to understand exercises better or discover new ones? Browse through our library including videos.', cta: 'Discover', to: '/exercises', image: 'https://images.unsplash.com/photo-1517963628607-235ccdd5476b?q=80&w=1974&auto=format&fit=crop' }];
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   useEffect(() => {
-    (async () => {
-      try {
-        // Try admin endpoint first; on 401 fall back to public
-        try {
-          const res = await api.get<any>('/api/home/slides');
-          const list: Slide[] = (res?.slides ?? res ?? []);
-          if (Array.isArray(list) && list.length > 0) { setSlides(list); return; }
-        } catch (e: any) {
-          if (e?.status !== 401) throw e;
-        }
-        const pub = await api.get<any>('/api/home/slides/public');
-        const list2: Slide[] = (pub?.slides ?? pub ?? []);
-        if (Array.isArray(list2) && list2.length > 0) setSlides(list2); else setSlides([{ title: 'Exercise Library', copy: 'Want to understand exercises better or discover new ones? Browse through our library including videos.', cta: 'Discover', to: '/exercises', image: 'https://images.unsplash.com/photo-1517963628607-235ccdd5476b?q=80&w=1974&auto=format&fit=crop' }]);
-      } catch {
-        setSlides([{ title: 'Exercise Library', copy: 'Want to understand exercises better or discover new ones? Browse through our library including videos.', cta: 'Discover', to: '/exercises', image: 'https://images.unsplash.com/photo-1517963628607-235ccdd5476b?q=80&w=1974&auto=format&fit=crop' }]);
-      }
-    })();
-  }, []);
+    if (slidesData && slidesData.length > 0) setSlides(slidesData);
+  }, [slidesData]);
 
   async function saveSlide(next: Slide) {
     const updated = [next, ...slides.slice(1)];
@@ -94,8 +94,23 @@ export default function HomePage() {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-2xl p-6 relative">
+        <div
+          className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setEditing(null)}
+          aria-modal
+          role="dialog"
+        >
+          <div
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              aria-label="Close"
+              className="absolute top-3 right-3 btn-ghost px-2 py-1 rounded-md"
+              onClick={() => setEditing(null)}
+            >
+              ✕
+            </button>
             <h2 className="text-lg font-semibold mb-4">Edit Home Card</h2>
             <div className="grid grid-cols-1 gap-4">
               <div>

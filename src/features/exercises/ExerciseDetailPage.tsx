@@ -6,13 +6,37 @@ import { MuscleMap } from './components/MuscleMap';
 import { useMuscleMapMeta } from './api';
 import { Tag } from './components/Tag';
 import { ArrowLeftIcon, CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 export default function ExerciseDetailPage() {
   const { id = '' } = useParams();
   const { data } = useExerciseDetail(id);
   const navigate = useNavigate();
 
-  if (!data) return <div className="text-sm text-gray-500">Loading…</div>;
+  if (!data) {
+    return (
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-slate-800 text-sm">
+            <ArrowLeftIcon className="h-4 w-4" />
+            <span>Library</span>
+          </div>
+          <Skeleton className="h-6 w-48" />
+        </div>
+        <Skeleton className="h-64 sm:h-96 w-full rounded-2xl" />
+        <div className="mt-4 flex items-center gap-2">
+          <Skeleton className="h-6 w-24 rounded-xl" />
+          <Skeleton className="h-6 w-20 rounded-xl" />
+          <Skeleton className="h-6 w-28 rounded-xl" />
+        </div>
+        <div className="mt-6 space-y-2">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-5 w-5/6" />
+          <Skeleton className="h-5 w-2/3" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto">

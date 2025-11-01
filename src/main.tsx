@@ -1,7 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
+import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import toast from 'react-hot-toast';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
@@ -53,16 +55,43 @@ const queryClient = new QueryClient({
   },
 });
 
+// Persist the query cache in localStorage for offline/longer persistence.
+// Note: We intentionally exclude some sensitive/fast-changing queries
+// (e.g. 'user:profile') from persistence below to avoid stale identity data.
+const PERSIST_KEY = 'APP_RQ_CACHE';
+const persister = createSyncStoragePersister({ storage: window.localStorage, key: PERSIST_KEY });
+const CACHE_MAX_AGE = 1000 * 60 * 60 * 24; // 24h
+const CACHE_BUSTER = (import.meta.env.VITE_CACHE_BUSTER as string | undefined) ?? 'v1';
+
 prepareMocks().finally(() => {
+  // Clear in-memory React Query cache on logout events to avoid cross-account leakage.
+  try {
+    window.addEventListener('app-cache-clear', () => {
+      queryClient.clear();
+    });
+  } catch {}
+
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <AppAuthProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{
+            persister,
+            maxAge: CACHE_MAX_AGE,
+            buster: CACHE_BUSTER,
+            // Do not persist identity-sensitive queries like 'user:profile'
+            dehydrateOptions: {
+              // Avoid persisting identity and fast-evolving metadata (muscle map)
+              shouldDehydrateQuery: (q) => !['user:profile','exercises:muscle-map'].includes(String(q.queryKey?.[0])) ,
+            },
+          }}
+        >
           <BrowserRouter>
             <App />
           </BrowserRouter>
           <Toaster position="top-right" />
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </AppAuthProvider>
     </React.StrictMode>
   );

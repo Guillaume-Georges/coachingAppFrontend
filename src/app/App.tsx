@@ -7,6 +7,10 @@ const ExercisesPage = lazy(() => import('../features/exercises/ExercisesPage'));
 const ExerciseDetailPage = lazy(() => import('../features/exercises/ExerciseDetailPage'));
 const LoginPage = lazy(() => import('../features/auth/LoginPage'));
 const SignUpPage = lazy(() => import('../features/auth/SignUpPage'));
+const ForgotPasswordPage = lazy(() => import('../features/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('../features/auth/ResetPasswordPage'));
+const VerifyEmailPage = lazy(() => import('../features/auth/VerifyEmailPage'));
+const VerifyEmailSentPage = lazy(() => import('../features/auth/VerifyEmailSentPage'));
 const ProfilePage = lazy(() => import('../features/user/ProfilePage'));
 const HomePage = lazy(() => import('../features/home/HomePage'));
 const MembersPage = lazy(() => import('../features/admin/MembersPage'));
@@ -19,6 +23,10 @@ export default function App() {
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/verify-email/sent" element={<VerifyEmailSentPage />} />
         <Route path="/exercises" element={<ExercisesPage />} />
         <Route path="/exercises/:id" element={<ExerciseDetailPage />} />
         <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />

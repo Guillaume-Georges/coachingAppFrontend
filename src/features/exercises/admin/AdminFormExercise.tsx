@@ -133,6 +133,16 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
       coachingCues: (value.coachingCues || []).map((s) => (s ?? '').toString().replace(/\s+/g, ' ').trim()).filter(Boolean),
       commonFaults: (value.commonFaults || []).map((s) => (s ?? '').toString().replace(/\s+/g, ' ').trim()).filter(Boolean),
     } as FormValue;
+    // Sanitize muscles against meta: remove unknown codes, limit primaries to 3, and avoid duplicates across primary/secondary
+    try {
+      const known = new Set((muscleMeta?.regions || []).map(r => r.code));
+      const prim = (cleaned.musclesPrimaryCodes || []).filter(c => known.has(c));
+      const sec0 = (cleaned.musclesSecondaryCodes || []).filter(c => known.has(c));
+      const primLimited = prim.slice(0, 3);
+      const sec = sec0.filter(c => !primLimited.includes(c));
+      cleaned.musclesPrimaryCodes = primLimited as any;
+      cleaned.musclesSecondaryCodes = sec as any;
+    } catch {}
     const parsed = ExerciseSchema.safeParse(cleaned);
     if (!parsed.success) {
       const flat = parsed.error.flatten().fieldErrors as Record<string, string[]>;
@@ -147,9 +157,7 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
       return;
     }
     const payload = { ...parsed.data } as any;
-    if (payload.bodyPartFocus && typeof payload.bodyPartFocus === 'string') {
-      payload.bodyPartFocus = payload.bodyPartFocus.replace(/\s/g, '');
-    }
+    // Keep bodyPartFocus as-is (e.g., "Full Body"). Backend expects the human label, not a compact code.
     // Send canonical codes only; let backend normalize names
     delete payload.musclesPrimary;
     delete payload.musclesSecondary;
@@ -236,13 +244,17 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium">Equipment</label>
-          <div className="mt-2 rounded-xl border border-gray-300 max-h-40 overflow-y-auto p-2 grid grid-cols-2 gap-2 bg-white dark:bg-slate-900">
-            {filters?.equipment?.map((e) => (
-              <label key={e} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={value.equipment.includes(e)} onChange={() => setField('equipment', value.equipment.includes(e) ? value.equipment.filter(x=>x!==e) : [...value.equipment, e])} /> {e}
-              </label>
-            ))}
+          <div className="mt-1">
+            <ChipsSelect
+              facet="equipment"
+              mode="multi"
+              value={value.equipment}
+              onChange={(v) => setField('equipment', v as string[])}
+              placeholder="Add equipment"
+              createEnabled
+            />
           </div>
+          <p className="mt-1 text-xs text-slate-500">Type to search or create missing equipment.</p>
         </div>
 
         <div className="md:col-span-2">
