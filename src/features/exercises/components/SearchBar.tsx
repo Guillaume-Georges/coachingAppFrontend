@@ -1,5 +1,6 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useEffect, useMemo, useRef, useState } from 'react';
+// No background spinner here; header shows it to avoid duplication.
 import { useSearchParams } from 'react-router-dom';
 
 export function SearchBar() {

@@ -56,6 +56,7 @@ export const LeanExercise = z.object({
   thumbnailUrl: z.string().url().optional(),
   modality: z.string().optional(),
   bodyPartFocus: z.string().optional(),
+  category: z.string().optional(),
   tags: z.array(z.string()).optional(),
 });
 export type TLeanExercise = z.infer<typeof LeanExercise>;

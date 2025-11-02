@@ -177,6 +177,16 @@ export function AdminFormExercise({ onClose, initial }: { onClose?: () => void; 
 
   return (
     <form className="space-y-8 pb-28" onSubmit={onSubmit}>
+      {(create.isPending || updateExercise.isPending) && (
+        <div className="sticky top-0 z-20 py-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur">
+          <div className="flex items-center justify-end">
+            <div className="inline-flex items-center gap-2 rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 px-3 py-1.5 shadow-sm">
+              <Spinner size={16} className="text-amber-600 dark:text-amber-200" />
+              <span className="text-sm font-medium">Saving…</span>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label htmlFor="form-name" className="block text-sm font-medium select-text">Name</label>

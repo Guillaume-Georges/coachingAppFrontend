@@ -64,7 +64,13 @@ export default function HomePage() {
         >
           {slides.map((s, i) => (
             <article key={i} className="relative shrink-0 w-full h-[440px] sm:h-[520px]">
-              <img src={s.image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />
+              <img
+                src={s.image}
+                alt=""
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover opacity-70"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
               <div className="relative h-full p-6 sm:p-10 flex flex-col justify-end">
                 <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight drop-shadow">{s.title}</h2>

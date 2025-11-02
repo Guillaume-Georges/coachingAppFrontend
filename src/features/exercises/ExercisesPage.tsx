@@ -7,10 +7,11 @@ import { FilterPanel } from './components/FilterPanel';
 import { ExerciseCard } from './components/ExerciseCard';
 import { Paginator } from './components/Paginator';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { Spinner } from '../../components/ui/Spinner';
 import { useUserProfile } from '../user/useUserProfile';
 import { useAuth } from '../../auth/AuthProvider';
 import { AdminFormExercise } from './admin/AdminFormExercise';
-import { useQueryClient } from '@tanstack/react-query';
+import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { useApi } from '../../api';
 import { Exercise } from './types';
 import { z } from 'zod';
@@ -25,6 +26,7 @@ export default function ExercisesPage() {
   const { isAuthenticated } = useAuth();
   const qc = useQueryClient();
   const api = useApi();
+  const isDetailFetching = useIsFetching({ queryKey: ['exercise', editItem?.id], exact: true }) > 0;
   const page = Number(params.get('page') || 1);
   const limit = Number(params.get('limit') || 24);
 
@@ -65,7 +67,10 @@ export default function ExercisesPage() {
     <div className="grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-8">
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold">Exercise Library</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold">Exercise Library</h1>
+            {!!data && isFetching && <Spinner size={18} className="text-brand-600" />}
+          </div>
           <div className="flex items-center gap-2">
             <button className={`inline-flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2 rounded-xl border ${hasFilters
               ? 'border-brand-600 text-brand-700 bg-brand-50 hover:bg-brand-100 dark:border-brand-700 dark:bg-brand-700 dark:text-white dark:hover:bg-brand-600'
@@ -152,7 +157,10 @@ export default function ExercisesPage() {
       {editItem && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-0 sm:p-4 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 rounded-none sm:rounded-2xl shadow-xl w-full max-w-3xl px-6 pt-6 pb-0 h-[100vh] sm:h-auto sm:max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-semibold mb-4 select-text">Edit Exercise</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold select-text">Edit Exercise</h2>
+              {isDetailFetching && <Spinner size={18} className="text-brand-600" />}
+            </div>
             <AdminFormExercise initial={editItem} onClose={() => setEditItem(null)} />
           </div>
         </div>

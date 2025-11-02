@@ -9,7 +9,7 @@ export function useExercisesQuery(search: URLSearchParams) {
   const qc = useQueryClient();
   // add light "fields" hint to backend for lean responses (ignored by mocks)
   const s = new URLSearchParams(search);
-  if (!s.get('fields')) s.set('fields', 'id,name,thumbnailUrl,modality,bodyPartFocus,tags,musclesPrimaryCodes,musclesSecondaryCodes');
+  if (!s.get('fields')) s.set('fields', 'id,name,thumbnailUrl,modality,bodyPartFocus,category,tags,musclesPrimaryCodes,musclesSecondaryCodes');
   const key = ['exercises', Object.fromEntries(s)];
   // Exercises list uses a 5-minute cache window to make Library feel snappy
   // across navigations while still updating relatively often.
@@ -71,6 +71,10 @@ export function useExerciseDetail(id: string) {
       return Exercise.parse((data as any));
     },
     enabled: !!id,
+    // Always revalidate on mount to ensure freshest edit data.
+    // Fast 304 via ETag makes this cheap when unchanged.
+    refetchOnMount: 'always',
+    staleTime: 1000 * 60, // consider fresh for 1 minute between navigations
   });
 }
 
@@ -153,14 +157,21 @@ export function useAdminExerciseMutations() {
   });
   const update = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: Partial<TExercise> }) => {
+      const keys = Object.keys(patch ?? {});
       const touchesMuscles =
         Object.prototype.hasOwnProperty.call(patch, 'musclesPrimaryCodes') ||
         Object.prototype.hasOwnProperty.call(patch, 'musclesSecondaryCodes') ||
         Object.prototype.hasOwnProperty.call(patch, 'musclesPrimary') ||
         Object.prototype.hasOwnProperty.call(patch, 'musclesSecondary');
       if (touchesMuscles) {
-        return api.patch(`/api/exercises/${id}?async=1`, patch);
+        const muscleKeys = new Set(['musclesPrimaryCodes','musclesSecondaryCodes','musclesPrimary','musclesSecondary']);
+        const onlyMuscles = keys.length > 0 && keys.every((k) => muscleKeys.has(k));
+        if (onlyMuscles) {
+          // Use muscles-only PATCH when no base fields are being changed.
+          return api.patch(`/api/exercises/${id}?async=1`, patch);
+        }
       }
+      // For any update that touches non-muscle fields, send full PUT as required by backend
       return api.put(`/api/exercises/${id}`, patch);
     },
     onSuccess: async (data: any, vars) => {
